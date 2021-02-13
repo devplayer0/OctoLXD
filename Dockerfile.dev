@@ -1,0 +1,13 @@
+FROM golang:1.15-alpine
+RUN apk --no-cache add git gcc musl-dev
+
+RUN install -d -m 777 /.cache
+WORKDIR /usr/local/src/octolxd
+VOLUME /usr/local/src/octolxd
+
+COPY tools.go ./
+RUN cat tools.go | sed -nr 's|^\t_ "(.+)"$|\1|p' | xargs -tI % go get %
+
+CMD ["CompileDaemon", "-exclude-dir=.git", \
+    "-build=go build -o bin/octolxd ./cmd/octolxd", "-command=bin/octolxd", \
+    "-graceful-kill"]
