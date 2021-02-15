@@ -1,0 +1,120 @@
+on:
+  push:
+    tags:
+      - '*/v*-*'
+
+name: Release
+
+jobs:
+  create_release:
+    runs-on: ubuntu-20.04
+
+    outputs:
+      slug: ${{ steps.vars.outputs.slug }}
+      version: ${{ steps.vars.outputs.version }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+      - name: Generate release vars
+        id: vars
+        run: |
+          echo "::set-output name=slug::"$(echo "${{ github.ref }}" | sed -r 's|refs/tags/(.+)/v.+|\1|')""
+          echo "::set-output name=version::"$(echo "${{ github.ref }}" | sed -r 's|refs/tags/.+/v(.+)|\1|')""
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: '${{ steps.vars.outputs.slug }} ${{ steps.vars.outputs.version }}'
+
+  build:
+    needs: create_release
+
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: arm64
+
+      - name: Install distrobuilder
+        run: |
+          sudo apt-get install -y debootstrap
+          sudo snap install distrobuilder --classic
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - id: build
+        name: Build image
+        run: |
+          SLUG="${{ needs.create_release.outputs.slug }}"
+          VERSION="${{ needs.create_release.outputs.version }}"
+
+          echo "Building $SLUG v$VERSION (${{ matrix.arch }})"
+
+          if [ -e "images/$SLUG.sh" ]; then
+            "images/$SLUG.sh" "images/$SLUG.yaml" out "${{ matrix.arch }}"
+          else
+            sudo distrobuilder build-lxd "images/$SLUG.yaml" out --type split --compression xz -o "image.architecture=${{ matrix.arch }}"
+          fi
+
+          cd out
+          sha256sum lxd.tar.xz > lxd.tar.xz.sha256
+          sha256sum rootfs.squashfs > rootfs.squashfs.sha256
+          cat lxd.tar.xz rootfs.squashfs | sha256sum > combined.sha256
+
+      - name: Upload metadata archive to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: out/lxd.tar.xz
+          asset_name: 'lxd.${{ matrix.arch }}.tar.xz'
+          asset_content_type: application/x-xz
+      - name: Upload metadata checksum to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: out/lxd.tar.xz.sha256
+          asset_name: 'lxd.${{ matrix.arch }}.tar.xz.sha256'
+          asset_content_type: text/plain
+
+      - name: Upload rootfs to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: out/rootfs.squashfs
+          asset_name: 'rootfs.${{ matrix.arch }}.squashfs'
+          asset_content_type: application/octet-stream
+      - name: Upload rootfs checksum to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: out/rootfs.squashfs.sha256
+          asset_name: 'rootfs.${{ matrix.arch }}.squashfs.sha256'
+          asset_content_type: text/plain
+
+      - name: Upload combined checksum to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: out/combined.sha256
+          asset_name: 'combined.${{ matrix.arch }}.sha256'
+          asset_content_type: text/plain
