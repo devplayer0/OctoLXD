@@ -1,4 +1,5 @@
 FROM golang:1.15-alpine AS builder
+RUN apk --no-cache add gcc musl-dev linux-headers
 
 WORKDIR /usr/local/src/octolxd
 COPY go.* ./
@@ -9,7 +10,7 @@ RUN cat tools.go | sed -nr 's|^\t_ "(.+)"$|\1|p' | xargs -tI % go get %
 
 COPY cmd/ ./cmd/
 COPY pkg/ ./pkg/
-RUN mkdir bin/ && CGO_ENABLED=0 go build -o bin/ ./cmd/...
+RUN mkdir bin/ && go build -o bin/ ./cmd/...
 
 
 FROM alpine:3.13

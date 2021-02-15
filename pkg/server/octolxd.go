@@ -5,13 +5,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+
+	"github.com/devplayer0/octolxd/pkg/simplestreams"
 )
 
 // Server represents the octolxd server
 type Server struct {
 	config Config
 
+	ss   *simplestreams.SimpleStreams
 	http *http.Server
 }
 
@@ -21,16 +25,19 @@ func NewServer(config Config) *Server {
 	s := &Server{
 		config: config,
 
+		ss: simplestreams.NewSimpleStreams(),
 		http: &http.Server{
 			Addr:    config.HTTP.ListenAddress,
-			Handler: router,
+			Handler: handlers.CustomLoggingHandler(nil, router, writeAccessLog),
 		},
 	}
 
 	router.HandleFunc("/health", s.healthCheck)
+	repoRouter := router.PathPrefix("/{owner}/{repo}").Subrouter()
 
-	//router.NotFoundHandler = http.HandlerFunc(s.apiNotFound)
-	//router.MethodNotAllowedHandler = http.HandlerFunc(s.apiMethodNotAllowed)
+	streamsRouter := repoRouter.PathPrefix("/streams/v1").Subrouter()
+	streamsRouter.HandleFunc("/index.json", s.streamsIndex).Methods(http.MethodGet)
+	streamsRouter.HandleFunc("/images.json", s.streamsImages).Methods(http.MethodGet)
 
 	return s
 }

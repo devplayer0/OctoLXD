@@ -1,5 +1,5 @@
 FROM golang:1.15-alpine
-RUN apk --no-cache add git gcc musl-dev
+RUN apk --no-cache add git gcc musl-dev linux-headers
 
 RUN install -d -m 777 /.cache
 WORKDIR /usr/local/src/octolxd
