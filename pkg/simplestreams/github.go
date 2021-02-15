@@ -77,7 +77,7 @@ func (s *SimpleStreams) GenerateStream(ctx context.Context, owner, repo string) 
 		return stream, fmt.Errorf("failed to list releases for %v/%v: %w", owner, repo, err)
 	}
 
-	var ps []string
+	psSet := map[string]struct{}{}
 	for _, rel := range rels {
 		image, err := ParseTag(*rel.TagName)
 		if err != nil {
@@ -93,8 +93,15 @@ func (s *SimpleStreams) GenerateStream(ctx context.Context, owner, repo string) 
 		}
 
 		for _, arch := range archs {
-			ps = append(ps, ProductID(image, arch))
+			psSet[ProductID(image, arch)] = struct{}{}
 		}
+	}
+
+	ps := make([]string, len(psSet))
+	i := 0
+	for pid := range psSet {
+		ps[i] = pid
+		i++
 	}
 	stream.Index["images"] = ss.StreamIndex{
 		DataType: "image-downloads",
@@ -236,6 +243,7 @@ func (s *SimpleStreams) GenerateImages(ctx context.Context, owner, repo string) 
 	for _, rel := range rels {
 		image, err := ParseTag(*rel.TagName)
 		if err != nil {
+			log.WithField("tag", *rel.TagName).WithError(err).Warn("Failed to parse release")
 			continue
 		}
 
