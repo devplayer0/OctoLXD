@@ -25,7 +25,7 @@ type TagImage struct {
 }
 
 func (t TagImage) String() string {
-	return t.Name + "/" + t.Version.String()
+	return t.Name + "/v" + t.Version.String()
 }
 
 // ProductID generates a "product ID" for an image

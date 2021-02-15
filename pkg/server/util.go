@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/devplayer0/octolxd/pkg/simplestreams"
 	"github.com/google/go-github/v33/github"
 	"github.com/gorilla/handlers"
 	log "github.com/sirupsen/logrus"
@@ -16,6 +17,8 @@ import (
 func ErrToStatus(err error) int {
 	var ghError *github.ErrorResponse
 	switch {
+	case errors.Is(err, simplestreams.ErrInvalidPath):
+		return http.StatusNotFound
 	case errors.As(err, &ghError):
 		return ghError.Response.StatusCode
 	default:

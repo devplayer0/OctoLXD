@@ -32,12 +32,15 @@ func NewServer(config Config) *Server {
 		},
 	}
 
-	router.HandleFunc("/health", s.healthCheck)
 	repoRouter := router.PathPrefix("/{owner}/{repo}").Subrouter()
 
 	streamsRouter := repoRouter.PathPrefix("/streams/v1").Subrouter()
 	streamsRouter.HandleFunc("/index.json", s.streamsIndex).Methods(http.MethodGet)
 	streamsRouter.HandleFunc("/images.json", s.streamsImages).Methods(http.MethodGet)
+
+	repoRouter.HandleFunc(simplestreams.PathPattern, s.imagesRedirect).Methods(http.MethodGet)
+
+	router.HandleFunc("/health", s.healthCheck)
 
 	return s
 }

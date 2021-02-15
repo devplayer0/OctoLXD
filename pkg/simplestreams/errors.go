@@ -9,4 +9,7 @@ var (
 	ErrMetadataMissing = errors.New("metadata.yaml missing from lxd.tar.xz")
 	// ErrIncompleteRelease indicates a release is missing key assets
 	ErrIncompleteRelease = errors.New("release is missing required assets")
+
+	// ErrInvalidPath indicates an image path is not valid
+	ErrInvalidPath = errors.New("invalid image file path")
 )
