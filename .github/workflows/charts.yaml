@@ -13,6 +13,7 @@ jobs:
 
     env:
       CHARTS_REPO: devplayer0/charts
+      CHARTS_SUBDIR: octolxd
 
     steps:
       - name: Checkout main repo
@@ -30,6 +31,7 @@ jobs:
 
       - name: Update charts in main repo
         run: |
+          rm -rf "charts/$CHARTS_SUBDIR"
           cp -a ../main/charts/ ./
 
           git config --local user.email "action@github.com"
