@@ -6,6 +6,6 @@ metadata:
     {{- include "octolxd.labels" . | nindent 4 }}
 data:
   {{- with .Values.config }}
-  iamd.yaml: |
+  octolxd.yaml: |
     {{- toYaml . | nindent 4 }}
   {{- end }}
