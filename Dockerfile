@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine AS builder
+FROM golang:1.16-alpine3.14 AS builder
 RUN apk --no-cache add gcc musl-dev linux-headers
 
 WORKDIR /usr/local/src/octolxd
@@ -13,7 +13,7 @@ COPY pkg/ ./pkg/
 RUN mkdir bin/ && go build -o bin/ ./cmd/...
 
 
-FROM alpine:3.13
+FROM alpine:3.14
 
 COPY --from=builder /usr/local/src/octolxd/bin/* /usr/local/bin/
 

@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine
+FROM golang:1.16-alpine3.14
 RUN apk --no-cache add git gcc musl-dev linux-headers
 
 RUN install -d -m 777 /.cache
@@ -6,7 +6,7 @@ WORKDIR /usr/local/src/octolxd
 VOLUME /usr/local/src/octolxd
 
 COPY tools.go ./
-RUN cat tools.go | sed -nr 's|^\t_ "(.+)"$|\1|p' | xargs -tI % go get %
+RUN cat tools.go | sed -nr 's|^\t_ "(.+)"$|\1|p' | xargs -tI % go get % && chmod -R 777 /go
 
 CMD ["CompileDaemon", "-exclude-dir=.git", \
     "-build=go build -o bin/octolxd ./cmd/octolxd", "-command=bin/octolxd", \

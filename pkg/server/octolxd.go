@@ -19,7 +19,7 @@ type Server struct {
 	http *http.Server
 }
 
-// NewServer creates a new iamd server
+// NewServer creates a new octolxd server
 func NewServer(config Config) *Server {
 	router := mux.NewRouter()
 	s := &Server{

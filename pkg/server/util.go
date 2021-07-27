@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/devplayer0/octolxd/pkg/simplestreams"
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v37/github"
 	"github.com/gorilla/handlers"
 	log "github.com/sirupsen/logrus"
 )

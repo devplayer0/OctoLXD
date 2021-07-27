@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v37/github"
 	lxdApi "github.com/lxc/lxd/shared/api"
 	ss "github.com/lxc/lxd/shared/simplestreams"
 	log "github.com/sirupsen/logrus"
