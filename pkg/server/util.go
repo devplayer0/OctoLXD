@@ -59,9 +59,15 @@ func JSONErrResponse(w http.ResponseWriter, err error, statusCode int) {
 }
 
 func writeAccessLog(w io.Writer, params handlers.LogFormatterParams) {
-	log.WithFields(log.Fields{
-		"agent":   params.Request.UserAgent(),
-		"status":  params.StatusCode,
-		"resSize": params.Size,
-	}).Debugf("%v %v", params.Request.Method, params.URL.RequestURI())
+	level := log.DebugLevel
+	if params.URL.Path == "/health" {
+		level = log.TraceLevel
+	}
+	log.StandardLogger().
+		WithFields(log.Fields{
+			"agent":   params.Request.UserAgent(),
+			"status":  params.StatusCode,
+			"resSize": params.Size,
+		}).
+		Logf(level, "%v %v", params.Request.Method, params.URL.RequestURI())
 }

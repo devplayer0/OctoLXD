@@ -81,7 +81,7 @@ func stop() {
 }
 
 func main() {
-	sigs := make(chan os.Signal)
+	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	viper.OnConfigChange(func(e fsnotify.Event) {
